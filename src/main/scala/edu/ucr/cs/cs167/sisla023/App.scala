@@ -12,6 +12,7 @@ object App {
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder
       .appName("Chicago Crime Arrest Prediction")
+      .master("local[*]")
       .getOrCreate()
 
     // Reading the parquet files into the dataframe
