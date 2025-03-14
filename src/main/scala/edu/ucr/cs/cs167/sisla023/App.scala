@@ -1,77 +1,88 @@
 package edu.ucr.cs.cs167.sisla023
 
-import org.apache.spark.ml.Pipeline
-import org.apache.spark.ml.classification.LogisticRegression
-import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
-import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler}
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.feature.{Tokenizer, HashingTF, StringIndexer}
+import org.apache.spark.ml.classification.LogisticRegression
+import org.apache.spark.mllib.evaluation.MulticlassMetrics
 
 object App {
 
   def main(args: Array[String]): Unit = {
-    // Create a SparkSession
     val spark = SparkSession.builder
       .appName("Chicago Crime Arrest Prediction")
       .getOrCreate()
 
-    // Load the pre-processed Chicago Crime dataset in Parquet format.
-    // This dataset is assumed to have been cleaned in Tasks 1-4 and includes columns such as:
-    // "PrimaryType" (crime type), "Arrest" (whether an arrest was made), "District", etc.
-    val crimeData = spark.read.parquet("path/to/chicago_crime_prepared.parquet")
+    // Reading the parquet files into the dataframe
+    val df = spark.read.parquet("path/to/chicago_crime_prepared.parquet")
+    // Creating a temp view to use spark sql on dataset
+    df.createOrReplaceTempView("crime")
 
-    // --- Data Preparation ---
-    // Convert the "PrimaryType" (categorical) into a numerical index.
-    val primaryTypeIndexer = new StringIndexer()
-      .setInputCol("PrimaryType")
-      .setOutputCol("PrimaryTypeIndex")
-      .setHandleInvalid("keep")
+    // query to retrieve only records where Arrest is 'true' or 'false'
+    val filteredDF = spark.sql("SELECT * FROM crime WHERE Arrest IN ('true', 'false')")
 
-    // Convert the "Arrest" column (which is a string like "TRUE"/"FALSE" or a boolean)
-    // into a numeric label (0.0/1.0).
+    // Combine PrimaryType and Description into one column to make tokenization easier
+    val combinedDF = filteredDF.withColumn("combinedText", concat_ws(" ", col("PrimaryType"), col("Description")))
+
+    // ML Pipeline:
+    // 1. Tokenizer
+    val tokenizer = new Tokenizer()
+      .setInputCol("combinedText")
+      .setOutputCol("tokens")
+
+    // 2. HashingTF
+    val hashingTF = new HashingTF()
+      .setInputCol("tokens")
+      .setOutputCol("features")
+      .setNumFeatures(1000)
+
+    // 3. StringIndexer
     val arrestIndexer = new StringIndexer()
       .setInputCol("Arrest")
       .setOutputCol("label")
       .setHandleInvalid("keep")
 
-    // Assemble features into a single vector.
-    // Here we include the indexed crime type and the district.
-    // You can add more features if available (e.g., extracting the hour from the crime time).
-    val assembler = new VectorAssembler()
-      .setInputCols(Array("PrimaryTypeIndex", "District"))
-      .setOutputCol("features")
-
-    // --- Model Training ---
-    // Create a logistic regression classifier for binary prediction.
-    val logisticRegression = new LogisticRegression()
+    // 4. Logistic Regression classifier
+    val lr = new LogisticRegression()
       .setFeaturesCol("features")
       .setLabelCol("label")
       .setMaxIter(10)
 
-    // Build the pipeline with all the stages.
-    val pipeline = new Pipeline().setStages(Array(primaryTypeIndexer, arrestIndexer, assembler, logisticRegression))
+    // Building the ML pipeline
+    val pipeline = new Pipeline().setStages(Array(tokenizer, hashingTF, arrestIndexer, lr))
 
     // Split the dataset into training (80%) and test (20%) sets.
-    val Array(trainingData, testData) = crimeData.randomSplit(Array(0.8, 0.2), seed = 12345)
+    val Array(trainingData, testData) = combinedDF.randomSplit(Array(0.8, 0.2), seed = 12345)
 
-    // Fit the pipeline to the training data.
+    // Start time to record timer spent running the model
+    val startTime = System.nanoTime()
+
+    // Training the model
     val model = pipeline.fit(trainingData)
 
-    // --- Predictions and Evaluation ---
-    // Use the trained model to make predictions on the test data.
+    // end time and compute total training time.
+    val endTime = System.nanoTime()
+    val totalTimeSeconds = (endTime - startTime) / 1e9d
+
+    // Apply model to test data
     val predictions = model.transform(testData)
-    predictions.select("features", "label", "prediction").show(5)
+    predictions.select("PrimaryType", "Description", "Arrest", "label", "prediction").show(10, truncate = false)
 
-    // Evaluate the model using the area under the ROC curve.
-    val evaluator = new BinaryClassificationEvaluator()
-      .setLabelCol("label")
-      .setRawPredictionCol("prediction")
-      .setMetricName("areaUnderROC")
+    // Evaluate precision and recall.
+    import spark.implicits._
+    val predictionAndLabels = predictions.select("prediction", "label")
+      .as[(Double, Double)]
+      .rdd // Convert predictions to an RDD of (prediction, label) tuples.
 
-    val auc = evaluator.evaluate(predictions)
-    println(s"Test Area Under ROC: $auc")
+    val metrics = new MulticlassMetrics(predictionAndLabels)
+    // For binary classification, label 1.0 indicates a "true" arrest.
+    val precision = metrics.precision(1.0)
+    val recall = metrics.recall(1.0)
 
-    // Optionally, save the trained model for later use.
-    model.write.overwrite().save("path/to/save/chicago_crime_arrest_model")
+    println(s"Total training time: $totalTimeSeconds seconds")
+    println(s"Precision: $precision")
+    println(s"Recall: $recall")
 
     spark.stop()
   }
