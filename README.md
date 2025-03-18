@@ -31,7 +31,7 @@ to understand how it is represented.
 
 ![ZIP Code visualization from UCR-Star](images/ZIP-Code-UCR-Star.png)
 
-## Task 1: Data preparation
+## Task 1: Data preparation (Matthew Tran)
 The first step is to prepare the data for processing. This includes two major steps.
 First, introduce a new attribute `ZIPCode` that indicates the ZIP code at which each crime happened.
 Second, convert the file into a column-oriented Parquet format to speed up the analysis.
@@ -95,7 +95,7 @@ Include a table that indicates the size of the original (decompressed) data and 
 | 10,000  |          |              |
 | 100,000 |          |              |
 
-## Task 2: Spatial analysis
+## Task 2: Spatial analysis (Kenny Thai)
 
 In this task, you need to count the total number of crimes for each ZIP code and plot the results as a choropleth map (see below).
 
@@ -118,7 +118,7 @@ You can also find [this sample result file](https://drive.google.com/open?id=1D6
 
 In the report, include your own visualization of the result for the 10k file that you get from Task A.
 
-## Task 3: Temporal analysis
+## Task 3: Temporal analysis (Peyton Chen)
 Given start and end dates, count the number of crimes for each crime type and plot as a bar chart (see below).
 
 ![Chicago Crime Bar Chart](images/ProjectA-Task3-Result.png)
@@ -148,7 +148,7 @@ Here is an overview of what you are expected to do.
 
 In the report, include your own visualization of the 10k dataset.
 
-## Task 4: Spatio-Temporal Analysis
+## Task 4: Spatio-Temporal Analysis (Naquib Haque)
 Given a rectangle region and a time period, show all crimes cases happened within the given time and region. 
 
 Here is an overview of what you are expected to do.
@@ -177,7 +177,7 @@ Your out should produce the following format:
 In the report, you need to run your code for three different regions. Also include your own visualizations for each of them and have a short discussion about the results.
 
 
-## Task 5: Arrest Prediction
+## Task 5: Arrest Prediction (Syed Islam)
 Develop a predictive model to forecast whether a reported crime incident will result in an arrest. This is a binary classification problem where the target variable is Arrest (with values "true" or "false"). The model should learn the relationship between all features and the arrest value. Then, it applies this model to all data to predict arrest status for each crime. For simplicity, we will only consider the `PrimaryType` of the crime and `description` of the crime as input features of the predictive model. 
 - Load the dataset in the Parquet format.
 You can test on [this sample file](https://drive.google.com/open?id=1D5R0DGueW-JS18z6tz6ZkIP6clpveock) until the first task is complete.
