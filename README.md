@@ -1,5 +1,5 @@
 # CS-167 Final Project Group A
-Syed Islam, Naquib Haque, Kenny Thai, Matthew Tran, Peyton Chan
+Syed Islam, Naquib Haque, Kenny Thai, Matthew Tran, Peyton Chen
 # Project A: Crime Data Analysis
 
 ## Objectives
