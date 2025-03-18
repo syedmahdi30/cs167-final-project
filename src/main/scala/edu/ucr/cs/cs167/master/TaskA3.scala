@@ -6,7 +6,7 @@ import org.apache.spark.sql.{SaveMode, SparkSession}
 /**
  * Scala program for Temporal Crime Analysis using Beast and Spark
  */
-object TaskA3 {
+object CrimeTemporalAnalysis {
   def main(args: Array[String]): Unit = {
     // Initialize Spark session
     val conf = new SparkConf().setAppName("Crime Temporal Analysis")
@@ -23,12 +23,13 @@ object TaskA3 {
     }
 
     // Parse start and end dates from command-line arguments
-    val startDate = args(0)  // Expected format: MM/DD/YYYY
-    val endDate = args(1)    // Expected format: MM/DD/YYYY
+    val dataFile = args(0)   // Expected format: parquet file
+    val startDate = args(1)  // Expected format: MM/DD/YYYY
+    val endDate = args(2)    // Expected format: MM/DD/YYYY
 
     try {
       // Load crime dataset from Parquet format
-      val crimeDF = spark.read.parquet("Chicago_Crimes_ZIP.parquet")
+      val crimeDF = spark.read.parquet(dataFile)
 
       // Register DataFrame as a temporary SQL table
       crimeDF.createOrReplaceTempView("crimes")
