@@ -1,4 +1,4 @@
-package edu.ucr.cs.cs167.sisla023
+package edu.ucr.cs.cs167.master
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
@@ -7,7 +7,7 @@ import org.apache.spark.ml.feature.{Tokenizer, HashingTF, StringIndexer}
 import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.mllib.evaluation.MulticlassMetrics
 
-object App {
+object TaskA5 {
 
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder
