@@ -29,7 +29,7 @@ object TaskA2 {
 
     //    val operation: String = args(0)
     val inputFile: String = args(0)
-    // val outputFile: String = args(1)
+    val outputFile: String = args(1)
 
     try {
       // Import Beast features
