@@ -1,22 +1,29 @@
 package edu.ucr.cs.cs167.master
 
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.classification.LogisticRegression
+import org.apache.spark.ml.feature.{HashingTF, StringIndexer, Tokenizer}
+import org.apache.spark.mllib.evaluation.MulticlassMetrics
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
-import org.apache.spark.ml.Pipeline
-import org.apache.spark.ml.feature.{Tokenizer, HashingTF, StringIndexer}
-import org.apache.spark.ml.classification.LogisticRegression
-import org.apache.spark.mllib.evaluation.MulticlassMetrics
 
 object TaskA5 {
 
   def main(args: Array[String]): Unit = {
+    if (args.length < 1) {
+      println("Usage: TaskA5 <input file>")
+      System.exit(1)
+    }
+
+    val inputFile = args(0)
+
     val spark = SparkSession.builder
       .appName("Chicago Crime Arrest Prediction")
       .master("local[*]")
       .getOrCreate()
 
     // Reading the parquet files into the dataframe
-    val df = spark.read.parquet("path/to/chicago_crime_prepared.parquet")
+    val df = spark.read.parquet(inputFile)
     // Creating a temp view to use spark sql on dataset
     df.createOrReplaceTempView("crime")
 
